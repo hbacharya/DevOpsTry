@@ -13,3 +13,4 @@ sudo journalctl --vacuum-time=1d
 
 # 3. Clean up the apt cache
 sudo apt-get clean
+
