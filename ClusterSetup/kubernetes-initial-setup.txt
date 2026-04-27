@@ -1,0 +1,201 @@
+# update the packages
+sudo apt update
+
+# install openssh
+sudo apt install openssh-server -y
+
+# find ip on the vm
+ip addr
+
+# connect using ssh on host machine
+
+ssh username@ipaddress
+
+# after ssh, following commands could be run using ssh on host machine
+----------------------------------------------------
+
+# setup static ip addresse for vm
+
+# find the ip address fine name
+cd /etc/netplan/
+
+# find the ethernet numer (look for something like eth0
+ip link
+
+# confirm the file name something like 00-installer-config.yaml
+ls
+
+# edit the file
+sudo nano 00-installer-config.yaml
+		
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    eth0:
+      dhcp4: no
+      addresses:
+        - 192.168.1.100/24
+      routes:
+        - to: default
+          via: 192.168.1.254
+      nameservers:
+        addresses: [8.8.8.8, 8.8.4.4]
+
+# apply updates
+sudo netplan apply
+
+# note: it will update ip address 
+------------------------------------------------
+# Disable Swap
+
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+-----------------------------------------------
+# Install conntrack and socat
+# 	Kubernetes requires a tool called conntrack (Connection Tracking). This is a kernel feature that allows the system to keep track of all the network connections (like which Pod is talking to which Service).
+# 	Without this, the Kubernetes networking rules (iptables) can't function.
+# 	think of conntrack as the State Table for your network.
+# 	When a request comes into your Load Balancer and needs to go to a specific Pod, conntrack remembers where that packet came from so it can send the response back to the right place. Without it, Kubernetes is "forgetful" and packets get lost.
+
+sudo apt install -y conntrack
+
+sudo apt install -y socat
+
+----------------------------------------------------
+
+# Networking "Pipes" for kubernetes 
+
+# 	Before the container engine can talk, we have to open the Linux kernel pipes.
+# 	The Kernel Modules (overlay and br_netfilter). Think of these like Drivers you install on a Windows machine.
+# 	overlay: This allows Kubernetes to "stack" file systems. It lets a container have its own read/write layer on top of a read-only base image.
+#	
+#	br_netfilter: This is the most critical one. It allows the Linux "Bridge" (the virtual switch inside the VM) to send traffic through the "Netfilter" (the firewall/router).
+#
+#	Without this: Your Pods wouldn't be able to talk to the outside world because the kernel would ignore their traffic.
+#
+# 	Essentially, we told the OS: "You aren't just a host anymore; you are a sophisticated network router."
+
+cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
+net.bridge.bridge-nf-call-iptables  = 1
+net.bridge.bridge-nf-call-ip6tables = 1
+net.ipv4.ip_forward                 = 1
+EOF
+
+sudo sysctl --system
+----------------------------------------------------------------
+
+# Install the Container Runtime (containerd) -  install the actual engine that will run pods.
+
+sudo apt update
+sudo apt install -y containerd
+
+------------------------------------------------------------------------------
+# setup SystemdCgroup
+
+# Kubernetes requires a specific setting called SystemdCgroup to be true. If you don't do this, the "Brain" and the "Engine" will fight over who controls the processes.
+
+# Create the default config file
+sudo mkdir -p /etc/containerd
+containerd config default | sudo tee /etc/containerd/config.toml > /dev/null
+
+# Tell it to use Systemd
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/g' /etc/containerd/config.toml
+
+# run the restart to pick up the new config
+sudo systemctl restart containerd
+
+-------------------------------------------------------------------------------
+# Install K8s
+
+# Adding the "Trusted" Source
+# Ubuntu’s default repositories don't always have the latest Kubernetes versions. We need to tell Ubuntu to trust the official Kubernetes source.
+
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+
+# Download the official Google/K8s security key
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+
+# Add the K8s repo to your sources list
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+
+sudo apt-get update
+
+# Installing the Tools (kubelet kubeadm kubectl)
+
+#		Before the Master can take charge, it needs its tools. We need to install three specific binaries that work together. 
+#		As a .NET dev, think of these like the Runtime, the CLI, and the Service Host.
+#		
+#		kubeadm (The Installer): The tool used to bootstrap the cluster. It’s like the "Setup.exe."
+#		
+#		kubelet (The Agent): This is the most important service. It runs on every node and ensures that containers are actually running. If kubelet stops, the node dies.
+#		
+#		kubectl (The Remote Control): The command-line utility you’ll use from your Windows machine (or the Master) to talk to the cluster.
+
+
+#install kubelet kubeadm kubectl
+sudo apt-get install -y kubelet kubeadm kubectl
+
+# This "pins" the version so 'apt upgrade' doesn't break your cluster later
+sudo apt-mark hold kubelet kubeadm kubectl
+
+# kubeadm init
+# 	run the command that officially creates the cluster. 
+# 	Because we decided on Calico for networking, we must provide a "Pod Network" range. Calico defaults to 192.168.0.0/16.
+# 	Why these flags matter:
+#	--pod-network-cidr: This tells Kubernetes: "All my internal Pods will live in the 192.168.0.x range." (Don't worry, this won't conflict with your physical 192.168.1.x network because it's virtual).
+#	--apiserver-advertise-address: This tells the cluster: "Hey, I am the Master, and my real IP is 192.168.1.100. Everyone should talk to me here."
+
+# kubeadm init (on control plane)
+sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address=192.168.1.100
+
+# Before you can run any commands, you have to tell kubectl where your cluster is. When you ran kubeadm init on the Master, it created a configuration file. You need to link that to your user profile.
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+
+# kubeadm join (on worker nodes - this command will be output of the kubeadm init
+
+sudo kubeadm join 192.168.1.100:6443 --token 94wk83.p29os8k37hrgrhua \
+        --discovery-token-ca-cert-hash sha256:fdd504f9772b4cf27b9d94ac64f02c19bbfff04fd4a55a4b0ef0e85cbfc71486
+
+# Verify that the cluster is up and running
+
+# See things like kube-apiserver, etcd, and kube-scheduler.
+# likely see coredns pods in a Pending state. Again, this is normal until Calico is installed.
+
+kubectl get pods -n kube-system
+
+# kubectl get nodes
+
+kubectl get nodes
+# expected output of get nodes (because calico is not yet installed)
+#		NAME      STATUS     ROLES           AGE     VERSION
+#		ubuntu1   NotReady   control-plane   5h9m    v1.31.14
+#		worker1   NotReady   <none>          3h19m   v1.31.14
+#		worker2   NotReady   <none>          4m24s   v1.31.14
+
+# install calico
+kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.27.0/manifests/calico.yaml
+
+# At this point all the nodes should be in Ready state. If not then debug
+
+# link crictl
+sudo crictl config --set runtime-endpoint=unix:///run/containerd/containerd.sock --set image-endpoint=unix:///run/containerd/containerd.sock
+
+sudo crictl images | grep calico
+
+nslookup docker.io
+
+# live logs on the worker nodes
+journalctl -u kubelet -f
