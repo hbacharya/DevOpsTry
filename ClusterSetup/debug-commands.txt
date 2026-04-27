@@ -1,0 +1,15 @@
+# If there are evict status for any pods:
+#	It means there is resource issue. Memory, Network, or disk is not sufficient
+
+kubectl describe nodes | grep -A 5 Conditions
+
+
+----------------Free Disk Space-----------------------------------
+# 1. Clean up unused container images and stopped containers
+sudo crictl rmi --prune
+
+# 2. Clear out the Ubuntu journal logs (which can grow huge)
+sudo journalctl --vacuum-time=1d
+
+# 3. Clean up the apt cache
+sudo apt-get clean
