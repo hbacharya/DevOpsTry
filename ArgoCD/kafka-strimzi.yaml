@@ -44,14 +44,14 @@ spec:
       #   tls: true
       - name: external
         port: 9094
-        type: nodeport
+        type: loadbalancer
         tls: false
-        configuration:
-          brokers:
-            - broker: 0
-              advertisedHost: localhost
-              advertisedPort: 30994
-              nodePort: 30994
+        # configuration:
+          # brokers:
+            # - broker: 0
+              # advertisedHost: localhost
+              # advertisedPort: 30994
+              # nodePort: 30994
     config:
       offsets.topic.replication.factor: 1
       transaction.state.log.replication.factor: 1
