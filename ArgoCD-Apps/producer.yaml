@@ -9,14 +9,14 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      app: dotnet-kafka-client
+      app: producer
   template:
     metadata:
       labels:
-        app: dotnet-kafka-client
+        app: producer
     spec:
       containers:
-      - name: producer-consumer
+      - name: producer
         image: hbacharya/devops-learn:latest # Update this!
         imagePullPolicy: Always
         env:
@@ -36,11 +36,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: dotnet-kafka-client-svc
+  name: producer-svc
   namespace: kafka
 spec:
   selector:
-    app: dotnet-kafka-client
+    app: producer
   ports:
   - protocol: TCP
     port: 80
