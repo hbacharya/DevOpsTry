@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: consumer
+  namespace: default # Deploying to the same namespace as Kafka for easier DNS resolution
   labels:
     app: consumer
 spec:
@@ -36,6 +37,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: consumer-svc
+  namespace: default
 spec:
   selector:
     app: consumer
