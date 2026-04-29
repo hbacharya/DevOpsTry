@@ -46,3 +46,25 @@ spec:
   - protocol: TCP
     port: 80
     targetPort: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: producer-ingress
+  namespace: default
+  annotations:
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /producer(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: producer-svc
+                port:
+                  number: 80    
