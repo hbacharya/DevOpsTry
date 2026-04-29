@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: consumer
-        image: ghcr.io/hbacharya/devops-learn2:v3 # Update this!
+        image: ghcr.io/hbacharya/devops-learn2:v4 # Update this!
         imagePullPolicy: Always
         env:
         # env are not in use now
