@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer
+  namespace: kafka # Deploying to the same namespace as Kafka for easier DNS resolution
+  labels:
+    app: consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer
+  template:
+    metadata:
+      labels:
+        app: consumer
+    spec:
+      containers:
+      - name: consumer
+        image: hbacharya/devops-learn2:latest # Update this!
+        imagePullPolicy: Always
+        env:
+        # env are not in use now
+        - name: Kafka__BootstrapServers
+          value: "my-cluster-kafka-bootstrap:9092"
+        - name: Kafka__Topic
+          value: "test"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer-svc
+  namespace: kafka
+spec:
+  selector:
+    app: consumer
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
