@@ -2,7 +2,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: consumer
-  namespace: kafka # Deploying to the same namespace as Kafka for easier DNS resolution
   labels:
     app: consumer
 spec:
@@ -17,7 +16,7 @@ spec:
     spec:
       containers:
       - name: consumer
-        image: hbacharya/devops-learn2:latest # Update this!
+        image: ghcr.io/hbacharya/devops-learn2:latest # Update this!
         imagePullPolicy: Always
         env:
         # env are not in use now
@@ -41,7 +40,7 @@ metadata:
 spec:
   selector:
     app: consumer
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - protocol: TCP
     port: 80
