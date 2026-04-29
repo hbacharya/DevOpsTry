@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: dotnet-kafka-client
+  name: producer
   namespace: kafka # Deploying to the same namespace as Kafka for easier DNS resolution
   labels:
-    app: dotnet-kafka-client
+    app: producer
 spec:
   replicas: 1
   selector:
