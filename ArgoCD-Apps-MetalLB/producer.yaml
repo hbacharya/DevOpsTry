@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: producer
+  namespace: kafka # Deploying to the same namespace as Kafka for easier DNS resolution
+  labels:
+    app: producer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: producer
+  template:
+    metadata:
+      labels:
+        app: producer
+    spec:
+      containers:
+      - name: producer
+        image: hbacharya/devops-learn:latest # Update this!
+        imagePullPolicy: Always
+        env:
+        # env are not in use now
+        - name: Kafka__BootstrapServers
+          value: "my-cluster-kafka-bootstrap:9092"
+        - name: Kafka__Topic
+          value: "test"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: producer-svc
+  namespace: kafka
+spec:
+  selector:
+    app: producer
+  type: LoadBalancer
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
