@@ -13,7 +13,7 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["KafkaTest/ProducerTest/ProducerTest.csproj", "KafkaTest/ProducerTest/"]
-RUN dotnet restore "./ProducerTest/ProducerTest.csproj"
+RUN dotnet restore "./KafkaTest/ProducerTest/ProducerTest.csproj"
 COPY . .
 WORKDIR "/src/KafkaTest/KaProducerTest"
 RUN dotnet build "./ProducerTest.csproj" -c $BUILD_CONFIGURATION -o /app/build
