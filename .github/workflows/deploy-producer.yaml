@@ -43,7 +43,7 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .                            # this will be sent to Build the docker file and used wile COPY, etc. commands
+          context: ./KafkaTest/ProducerTest      # this will be sent to Build the docker file and used wile COPY, etc. commands
           file: ./KafkaTest/ProducerTest/Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
