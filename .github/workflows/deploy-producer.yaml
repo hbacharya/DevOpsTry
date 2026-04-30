@@ -1,12 +1,13 @@
 name: Build and Deploy to Lab
 
 on:
+  workflow_dispatch: {}
   push:
     branches: [ "master" ] # Triggers whenever you push to main
     paths:
       - 'KafkaTest/ProducerTest/**'        # Changes to the C# code
       - 'ArgoCD-Apps-MetalLB/producer.yaml'   # Changes to the K8s manifest
-      - '.github/workflows/deploy-producer.yml' # Changes to the pipeline itself
+      - '.github/workflows/deploy-producer.yaml' # Changes to the pipeline itself
       
 env:
   REGISTRY: ghcr.io
