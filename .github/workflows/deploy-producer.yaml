@@ -3,14 +3,14 @@ name: Build and Deploy to Lab
 on:
   push:
     branches: [ "master" ] # Triggers whenever you push to main
-paths:
+    paths:
       - 'KafkaTest/ProducerTest/**'        # Changes to the C# code
       - 'ArgoCD-Apps-MetalLB/producer.yaml'   # Changes to the K8s manifest
       - '.github/workflows/deploy-producer.yml' # Changes to the pipeline itself
       
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: producer
 
 jobs:
   build-and-push:
@@ -36,7 +36,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=sha
+            type=sha,format=short,prefix=,suffix=---v${{ github.run_number }}
             latest
 
       - name: Build and push Docker image
@@ -51,10 +51,14 @@ jobs:
       - name: Update Kubernetes resources
         run: |
           # This uses 'sed' to find the image line in your yaml and update it with the unique commit SHA
-          sed -i "s|image: ghcr.io/.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}---v${{ github.run_number }}|g" dotnet-kafka-app.yaml
-          
+          IMAGE_TAG="${GITHUB_SHA}-v${GITHUB_RUN_NUMBER}"
+          IMAGE_PATH="ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG}"
+
+          # update only the target image line
+          sed -i "s|image: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:.*|image: ${IMAGE_PATH}|g" "ArgoCD-Apps-MetalLB/producer.yaml"
+
           git config --global user.name "github-actions"
           git config --global user.email "github-actions@github.com"
-          git add dotnet-kafka-app.yaml
-          git commit -m "chore: update image tag to sha-${{ github.sha }}"
+          git add "ArgoCD-Apps-MetalLB/producer.yaml"
+          git commit -m "deployment: update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
           git push
