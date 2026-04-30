@@ -17,7 +17,7 @@ namespace ConsumerTest
                        o.DocumentSettings = s =>
                        {
                            s.Title = "ConsumerTest API";
-                           s.Version = "v3";
+                           s.Version = "v4";
                        };
                    });
 

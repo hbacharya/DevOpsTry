@@ -1,0 +1,66 @@
+name: Build and Deploy to Lab
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: [ "master" ] # Triggers whenever you push to main
+    paths:
+      - 'KafkaTest/ConsumerTest/**'        # Changes to the C# code
+      - 'ArgoCD-Apps-MetalLB/consumer.yaml'   # Changes to the K8s manifest
+      - '.github/workflows/deploy-Consumer.yaml' # Changes to the pipeline itself
+      
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: Consumer
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short,prefix=,suffix=---v${{ github.run_number }}
+            latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./KafkaTest/ConsumerTest      # this will be sent to Build the docker file and used wile COPY, etc. commands
+          file: ./KafkaTest/ConsumerTest/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # STEP 2: Update the YAML manifest with the new Image Tag (SHA)
+      - name: Update Kubernetes resources
+        run: |
+          # This uses 'sed' to find the image line in your yaml and update it with the unique commit SHA
+          IMAGE_TAG="${GITHUB_SHA}-v${GITHUB_RUN_NUMBER}"
+          IMAGE_PATH="ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:${IMAGE_TAG}"
+
+          # update only the target image line
+          sed -i "s|image: ghcr.io/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}:.*|image: ${IMAGE_PATH}|g" "ArgoCD-Apps-MetalLB/Consumer.yaml"
+
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add "ArgoCD-Apps-MetalLB/Consumer.yaml"
+          git commit -m "deployment: update image tag to ${IMAGE_TAG}" || echo "No changes to commit"
+          git push
