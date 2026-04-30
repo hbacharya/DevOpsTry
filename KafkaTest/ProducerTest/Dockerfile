@@ -15,7 +15,7 @@ WORKDIR /src
 COPY ["KafkaTest/ProducerTest/ProducerTest.csproj", "KafkaTest/ProducerTest/"]
 RUN dotnet restore "./ProducerTest/ProducerTest.csproj"
 COPY . .
-WORKDIR "/src/ProducerTest"
+WORKDIR "/src/KafkaTest/KaProducerTest"
 RUN dotnet build "./ProducerTest.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
