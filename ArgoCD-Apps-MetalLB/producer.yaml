@@ -19,7 +19,7 @@ spec:
       - name: github-pull-secret
       containers:
       - name: producer
-        image: ghcr.io/hbacharya/producer:c56500bab8b61a4a30569805e162a60e716bfffb-v10
+        image: ghcr.io/hbacharya/producer:cc382b6f1c55e1f5f9a1cc151f3de6190d954164-v11
         imagePullPolicy: Always
         env:
         # env are not in use now
