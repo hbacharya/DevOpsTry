@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root-management-app
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/hbacharya/DevOpsTry
+    path: ArgoCd-Management/  # Folder where you put your other App YAMLs
+    targetRevision: HEAD
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
