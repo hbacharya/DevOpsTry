@@ -1,0 +1,60 @@
+name: Build and Deploy to Lab
+
+on:
+  push:
+    branches: [ "master" ] # Triggers whenever you push to main
+paths:
+      - 'KafkaTest/ProducerTest/**'        # Changes to the C# code
+      - 'ArgoCD-Apps-MetalLB/producer.yaml'   # Changes to the K8s manifest
+      - '.github/workflows/deploy-producer.yml' # Changes to the pipeline itself
+      
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha
+            latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      # STEP 2: Update the YAML manifest with the new Image Tag (SHA)
+      - name: Update Kubernetes resources
+        run: |
+          # This uses 'sed' to find the image line in your yaml and update it with the unique commit SHA
+          sed -i "s|image: ghcr.io/.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${{ github.sha }}---v${{ github.run_number }}|g" dotnet-kafka-app.yaml
+          
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add dotnet-kafka-app.yaml
+          git commit -m "chore: update image tag to sha-${{ github.sha }}"
+          git push

@@ -15,9 +15,11 @@ spec:
       labels:
         app: producer
     spec:
+      imagePullSecrets:
+      - name: github-pull-secret
       containers:
       - name: producer
-        image: hbacharya/devops-learn:latest # Update this!
+        image: ghcr.io/hbacharya/producer:latest # Update this!
         imagePullPolicy: Always
         env:
         # env are not in use now
