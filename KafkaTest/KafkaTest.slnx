@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="ConsumerTest/ConsumerTest.csproj" />
+  <Project Path="ProducerTest/ProducerTest.csproj" Id="6537a049-5d92-4d65-b528-eed784aaa834" />
+</Solution>
