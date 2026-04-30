@@ -7,7 +7,7 @@ on:
     paths:
       - 'KafkaTest/ConsumerTest/**'        # Changes to the C# code
       - 'ArgoCD-Apps-MetalLB/consumer.yaml'   # Changes to the K8s manifest
-      - '.github/workflows/deploy-Consumer.yaml' # Changes to the pipeline itself
+      - '.github/workflows/deploy-consumer.yaml' # Changes to the pipeline itself
       
 env:
   REGISTRY: ghcr.io
