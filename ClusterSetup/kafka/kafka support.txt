@@ -7,3 +7,7 @@ kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisione
 # make storage class default
 kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
 
+
+------------------------------Install Strimzi-------------------------------------------
+# Install the Strimzi Operator
+kubectl apply -f 'https://strimzi.io/install/latest?namespace=kafka' -n kafka
