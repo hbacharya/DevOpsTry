@@ -81,7 +81,7 @@ metadata:
   labels:
     app: kafka-ui
 spec:
-  type: NodePort
+  type: ClusterIP
   ports:
     - port: 8080
       targetPort: 8080
@@ -119,3 +119,25 @@ spec:
             - name: KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS
               value: my-cluster-kafka-bootstrap:9092
               # value: "my-cluster-kafka-external-bootstrap:9093"
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kafkakui-ingress
+  namespace: kafka
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: "kafkaui.homelab.local"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kafka-ui
+            port:
+              number: 80                  
