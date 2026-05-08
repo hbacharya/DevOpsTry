@@ -140,4 +140,4 @@ spec:
           service:
             name: kafka-ui
             port:
-              number: 80                  
+              number: 8080                  
