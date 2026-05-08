@@ -1,3 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: argocd-server-cert
+  namespace: argocd
+spec:
+  dnsNames:
+    - argocd.homelab.local
+  issuerRef:
+    name: argocd-selfsigned-issuer
+    kind: Issuer
+  secretName: argocd-server-tls
+
+---
+
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -5,13 +20,17 @@ metadata:
   namespace: argocd
   annotations:
     kubernetes.io/ingress.class: "nginx"
+    # Tells NGINX to talk to Argo CD via HTTPS internally
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # Tells NGINX to ignore that the Argo CD internal cert is self-signed
     nginx.ingress.kubernetes.io/proxy-ssl-verify: "off"
+    # Helps with the login loop issue by ensuring the session is handled correctly
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
 spec:
-  # tls:
-  # - hosts:
-    # - argo.homelab.local
-    # secretName: argocd-server-tls # The secret we just created
+  tls:
+  - hosts:
+    - argocd.homelab.local
+    secretName: argocd-server-tls
   rules:
   - host: "argocd.homelab.local"
     http:
@@ -22,4 +41,4 @@ spec:
           service:
             name: argocd-server
             port:
-              number: 443              
+              number: 443
