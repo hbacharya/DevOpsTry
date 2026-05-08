@@ -41,7 +41,7 @@ metadata:
 spec:
   selector:
     app: consumer
-  type: LoadBalancer
+  type: ClusterIP
   ports:
   - protocol: TCP
     port: 80
