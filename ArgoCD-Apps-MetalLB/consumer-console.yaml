@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: consumer-console
-        image: ghcr.io/hbacharya/consumer-console:bd83199f75ba9dc51c05b1cd416c78bbca6319d3---v4
+        image: ghcr.io/hbacharya/consumer-console:c7df44a855b9a3b2f5352c3901b81a9913283867---v5
         imagePullPolicy: Always
         env:
         - name: Kafka__BootstrapServers
