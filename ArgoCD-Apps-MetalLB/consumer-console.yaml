@@ -1,12 +1,11 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: consumer-console
-  namespace: kafka # Deploying to the same namespace as Kafka for easier DNS resolution
-  labels:
-    app: consumer-console
+  namespace: kafka
 spec:
-  replicas: 1
+  serviceName: consumer-console
+  replicas: 2
   selector:
     matchLabels:
       app: consumer-console
@@ -20,7 +19,6 @@ spec:
         image: ghcr.io/hbacharya/consumer-console:bd83199f75ba9dc51c05b1cd416c78bbca6319d3---v4
         imagePullPolicy: Always
         env:
-        # env are not in use now
         - name: Kafka__BootstrapServers
           value: "my-cluster-kafka-bootstrap:9092"
         - name: Kafka__SourceTopic
@@ -28,7 +26,9 @@ spec:
         - name: Kafka__DestinationTopic
           value: "test-destination"
         - name: Kafka__GroupInstanceId
-          value: "consumer-0"
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
         resources:
           limits:
             memory: "512Mi"

@@ -30,13 +30,14 @@ namespace Consumer.Console
 
                 // produce the same message to destination topic
                 var servers = configuration.GetSection("Kafka:BootstrapServers").Value;
+                var groupInstanceId = configuration.GetSection("Kafka:GroupInstanceId").Value;
                 var producerConfig = new ProducerConfig { BootstrapServers = servers };
                 using (var producer = new ProducerBuilder<string, string>(producerConfig).Build())
                 {
                     var destinationTopic = configuration.GetSection("Kafka:DestinationTopic").Value;
                     // append timestamp to the message
                     var timestamp = DateTime.UtcNow.ToString("o"); // ISO 8601 format
-                    message = $"{timestamp} - {message}";
+                    message = $"{timestamp} - {groupInstanceId} - {message}";
                     producer.ProduceAsync(destinationTopic, new Message<string, string>
                     {
                         Key = result.Message.Key,
