@@ -1,4 +1,4 @@
-name: Build and Deploy to Lab
+name: Producer - Build and Deploy to Lab
 
 on:
   workflow_dispatch: {}
