@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: consumer
-        image: ghcr.io/hbacharya/consumer:ef4fb9e0c81dceae4637a03ebca8d0d66ba5f397---v11
+        image: ghcr.io/hbacharya/consumer:3d14f9537c4348f3d394148e477d58e7d1e9191a---v14
         imagePullPolicy: Always
         env:
         # env are not in use now
