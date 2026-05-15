@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: consumer-console
-        image: ghcr.io/hbacharya/consumer-console:3d6e2d011948f559a7bfde511662af68658ed657---v3
+        image: ghcr.io/hbacharya/consumer-console:bd83199f75ba9dc51c05b1cd416c78bbca6319d3---v4
         imagePullPolicy: Always
         env:
         # env are not in use now
