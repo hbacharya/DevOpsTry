@@ -36,39 +36,3 @@ spec:
           requests:
             memory: "256Mi"
             cpu: "250m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: consumer-svc
-  namespace: kafka
-spec:
-  selector:
-    app: consumer
-  type: ClusterIP
-  ports:
-  - protocol: TCP
-    port: 80
-    targetPort: 8080
-
----
-
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: consumer-ingress
-  namespace: kafka
-  annotations:
-    kubernetes.io/ingress.class: "nginx"
-spec:
-  rules:
-  - host: "consumer.homelab.local"
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: consumer-svc
-            port:
-              number: 80   
