@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: consumer-console
+  namespace: kafka # Deploying to the same namespace as Kafka for easier DNS resolution
+  labels:
+    app: consumer-console
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: consumer-console
+  template:
+    metadata:
+      labels:
+        app: consumer-console
+    spec:
+      containers:
+      - name: consumer-console
+        image: ghcr.io/hbacharya/consumer-console:ef4fb9e0c81dceae4637a03ebca8d0d66ba5f397---v11
+        imagePullPolicy: Always
+        env:
+        # env are not in use now
+        - name: Kafka__BootstrapServers
+          value: "my-cluster-kafka-bootstrap:9092"
+        - name: Kafka__SourceTopic
+          value: "test-source"
+        - name: Kafka__DestinationTopic
+          value: "test-destination"
+        - name: Kafka__GroupInstanceId
+          value: "consumer-0"
+        resources:
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: consumer-svc
+  namespace: kafka
+spec:
+  selector:
+    app: consumer
+  type: ClusterIP
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+
+---
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: consumer-ingress
+  namespace: kafka
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+spec:
+  rules:
+  - host: "consumer.homelab.local"
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: consumer-svc
+            port:
+              number: 80   

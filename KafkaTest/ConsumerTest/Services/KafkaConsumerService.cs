@@ -11,7 +11,7 @@ namespace ConsumerTest.Services
 
     public sealed class KafkaConsumerService : IKafkaConsumerService, IDisposable
     {
-        private IConsumer<Null, string> _consumer = null;
+        private IConsumer<string, string> _consumer = null;
         private readonly SemaphoreSlim _lock = new(1, 1);
         private bool _isStarted = false;
         
@@ -54,7 +54,7 @@ namespace ConsumerTest.Services
                 EnableAutoCommit = false
             };
 
-            _consumer = new ConsumerBuilder<Null, string>(config).Build();
+            _consumer = new ConsumerBuilder<string, string>(config).Build();
             _consumer.Subscribe(request.Topic);
 
             _isStarted = true;

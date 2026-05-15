@@ -40,11 +40,11 @@ namespace ProducerTest.Endpoints
                 BootstrapServers = bootstrapServers
             };
 
-            using var producer = new ProducerBuilder<Null, string>(producerConfig).Build();
+            using var producer = new ProducerBuilder<string, string>(producerConfig).Build();
 
             var deliveryResult = await producer.ProduceAsync(
                 topic,
-                new Message<Null, string> { Value = req.Message },
+                new Message<string, string> {Key = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff"), Value = req.Message },
                 ct);
 
             var response = new ProducerResponse
