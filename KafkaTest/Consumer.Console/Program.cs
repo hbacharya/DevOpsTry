@@ -58,6 +58,9 @@ namespace Consumer.Console
             var topic = configuration.GetSection("Kafka:SourceTopic").Value;
             var groupInstanceId = configuration.GetSection("Kafka:GroupInstanceId").Value;
 
+            System.Console.WriteLine($"Server: {servers}");
+            System.Console.WriteLine($"Subscribing to topic: {topic}. Group Instance ID: {groupInstanceId}.");
+            
             var config = new ConsumerConfig
             {
                 BootstrapServers = servers,
